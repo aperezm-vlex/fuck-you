@@ -17,18 +17,24 @@ main(process.argv, process.pid)
 // :: [String], Number -> () *Eff*
 function main(args, pid) {
   if (args.length <3) {
-    show('Usage: fuck [you] PROCESS_NAME')
-    process.exit(1) }
+    show('Usage: fuck [you] PROCESS_NAME\n        fuck -p PROCESS_ID');
+    process.exit(1);
+  }
 
-  var processName = last(args).get()
-  var processes   = shell('pgrep', [processName])
-  var toKill      = processes.map(function(data) {
-                                    return parseIds(data.output).filter(notEqual(pid))
-                                                                .map(kill) })
+  var processToKill = args.pop();
+  if (args.pop() == '-p') {
+    var processes = shell('echo ', [processToKill]);
+  } else {
+    var processes = shell('pgrep', [processToKill]);
+  }
+
+  var toKill = processes.map(function(data) {
+    return parseIds(data.output).filter(notEqual(pid)).map(kill)
+  });
 
   toKill.chain(sequence(Future))
         .fork( function(e)  { show('(；￣Д￣) . o O( It’s not very effective... )') }
-             , function(xs) { show('(╯°□°）╯︵', flip(processName), ' (x', xs.length, ')') })}
+             , function(xs) { show('(╯°□°）╯︵', flip(processToKill), ' (x', xs.length, ')') })}
 
 
 // :: String... -> () *Eff*
